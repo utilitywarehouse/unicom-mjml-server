@@ -1,0 +1,38 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - run: git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      - run: git clone https://github.com/utilitywarehouse/unicom-pkg /go/src/github.com/utilitywarehouse/unicom-pkg
+      - setup_remote_docker
+      - run: make ci-docker-build
+  deploy:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - run: git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      - run: git clone https://github.com/utilitywarehouse/unicom-pkg /go/src/github.com/utilitywarehouse/unicom-pkg
+      - setup_remote_docker
+      - run: make ci-docker-build
+      - run: make ci-docker-push
+      - run: make ci-kubernetes-push
+workflows:
+  version: 2
+  development:
+    jobs:
+      - build:
+          context: unicom-dev
+          filters:
+            branches:
+              ignore:
+                - master
+      - deploy:
+          context: unicom-dev
+          filters:
+            branches:
+              only:
+                - master
